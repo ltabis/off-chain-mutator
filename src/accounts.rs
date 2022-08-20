@@ -1,3 +1,5 @@
+use crate::transaction::Transaction;
+
 /// Account storing available and held amounts.
 #[derive(Debug, serde::Serialize, PartialEq)]
 pub struct Account {
@@ -8,6 +10,8 @@ pub struct Account {
     pub held: f32,
     pub total: f32,
     pub locked: bool,
+    #[serde(skip_serializing)]
+    pub disputed: Option<Transaction>,
 }
 
 impl Account {
@@ -18,6 +22,7 @@ impl Account {
             held: 0.0,
             total: 0.0,
             locked: false,
+            disputed: None,
         }
     }
 }

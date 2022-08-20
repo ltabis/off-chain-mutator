@@ -19,7 +19,7 @@ fn main() {
         let mut clients = transactions
             .0
             .iter()
-            .map(|transaction| (transaction.client_id, Account::new(transaction.client_id)))
+            .map(|transaction| (transaction.client, Account::new(transaction.client)))
             .collect::<std::collections::HashMap<_, _>>();
 
         transactions.update_accounts(&mut clients);
