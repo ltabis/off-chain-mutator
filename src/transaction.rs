@@ -129,7 +129,6 @@ impl History {
                             _ => None,
                         }
                     }) {
-                        account.available -= disputed.amount.unwrap();
                         account.held += disputed.amount.unwrap();
 
                         account.disputed.push((*disputed).clone());
