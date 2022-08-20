@@ -121,10 +121,11 @@ impl History {
                         account.total -= amount;
                     }
                 }
+                // NOTE: does a dispute can be placed on a deposit ?
                 (TransactionType::Dispute, None) => {
                     // We can search from the beginning because for a
-                    // dispute to occur their first need to be a regular
-                    // transaction (withdrawal or deposit).
+                    // dispute to occur their first need to be a withdrawal.
+                    // (and deposit ?)
                     if let Some(disputed) =
                         transaction_by_id(&self.0, transaction.tx).and_then(|(_, old)| {
                             match (&old.r#type, old.amount) {
@@ -135,6 +136,7 @@ impl History {
                         })
                     {
                         account.held += disputed.amount.unwrap();
+                        account.total += disputed.amount.unwrap();
 
                         account.disputed.push((*disputed).clone());
                     }
@@ -155,11 +157,13 @@ impl History {
                     if let Some((index, disputed)) =
                         transaction_by_id(&account.disputed, transaction.tx)
                     {
-                        account.held -= disputed.amount.unwrap();
-                        account.total -= disputed.amount.unwrap();
+                        if matches!(disputed.r#type, TransactionType::Withdrawal) {
+                            account.held -= disputed.amount.unwrap();
+                            account.total -= disputed.amount.unwrap();
 
-                        account.locked = true;
-                        account.disputed.swap_remove(index);
+                            account.locked = true;
+                            account.disputed.swap_remove(index);
+                        }
                     }
                 }
                 _ => {}
