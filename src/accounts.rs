@@ -11,7 +11,7 @@ pub struct Account {
     pub total: f32,
     pub locked: bool,
     #[serde(skip_serializing)]
-    pub disputed: Option<Transaction>,
+    pub disputed: Vec<Transaction>,
 }
 
 impl Account {
@@ -22,7 +22,7 @@ impl Account {
             held: 0.0,
             total: 0.0,
             locked: false,
-            disputed: None,
+            disputed: vec![],
         }
     }
 }

@@ -132,26 +132,26 @@ impl History {
                         account.available -= disputed.amount.unwrap();
                         account.held += disputed.amount.unwrap();
 
-                        account.disputed = Some((*disputed).clone());
+                        account.disputed.push((*disputed).clone());
                     }
                 }
                 (TransactionType::Resolve, None) => {
-                    if let Some(disputed) = &account.disputed {
+                    if let Some(disputed) = &account.disputed.last() {
                         {
                             account.available += disputed.amount.unwrap();
                             account.held -= disputed.amount.unwrap();
 
-                            account.disputed = None;
+                            account.disputed.pop();
                         };
                     }
                 }
                 (TransactionType::Chargeback, None) => {
-                    if let Some(disputed) = &account.disputed {
+                    if let Some(disputed) = &account.disputed.last() {
                         account.held -= disputed.amount.unwrap();
                         account.total -= disputed.amount.unwrap();
 
                         account.locked = true;
-                        account.disputed = None;
+                        account.disputed.pop();
                     }
                 }
                 _ => {}
