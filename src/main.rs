@@ -11,7 +11,6 @@ fn main() {
 
     if let Some(path) = args.next() {
         // FIXME: error handling: does all files have headers ?
-        // FIXME: error handling: does all row have the same nb of columns ?
         let transactions = History::from_path(&path).expect("failed to read transactions");
 
         // not extracting accounts directly in the history enable the user

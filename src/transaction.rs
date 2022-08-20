@@ -6,16 +6,20 @@ use crate::accounts::Account;
 pub enum TransactionError {
     ReadError(String),
     DeserializationError(String),
+    DataFormatError(String),
 }
 
 impl std::fmt::Display for TransactionError {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         f.write_str(&match self {
             TransactionError::ReadError(err) => {
-                format!("could not read transactions: {err}")
+                format!("could not read transactions file: {err}")
             }
             TransactionError::DeserializationError(err) => {
                 format!("could not deserialize transactions: {err}")
+            }
+            TransactionError::DataFormatError(err) => {
+                format!("could not parse transactions: {err}")
             }
         })
     }
@@ -48,8 +52,28 @@ impl History {
         Self(transactions)
     }
 
+    /// Checks data integrity of the history.
     fn check_formatting(&self) -> Result<(), TransactionError> {
-        todo!()
+        // Check if there are duplicates.
+        // FIXME: this could be slow. Search a better way to find duplicates.
+        let mut regular_transaction = std::collections::HashSet::with_capacity(self.0.len());
+
+        if let Some(duplicate) = self.0.iter().find(|transaction| match transaction.r#type {
+            TransactionType::Deposit | TransactionType::Withdrawal => {
+                regular_transaction.insert(transaction.tx) == false
+            }
+            _ => false,
+        }) {
+            return Err(TransactionError::DataFormatError(format!(
+                "duplicate transactions found: {}",
+                duplicate.tx
+            )));
+        }
+
+        // NOTE: We chose not to check for missing regular transactions for disputed.
+        //       They are simply just ignored.
+
+        Ok(())
     }
 
     pub fn from_path(path: &str) -> Result<Self, TransactionError> {
@@ -65,7 +89,7 @@ impl History {
                 .map_err(|err| TransactionError::DeserializationError(err.to_string()))?,
         );
 
-        // TODO: history.check_formatting()?;
+        history.check_formatting()?;
 
         Ok(history)
     }
