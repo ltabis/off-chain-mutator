@@ -1,5 +1,5 @@
 /// Account storing available and held amounts.
-#[derive(Debug, serde::Serialize)]
+#[derive(Debug, serde::Serialize, PartialEq)]
 pub struct Account {
     #[serde(rename = "client")]
     pub client_id: u16,

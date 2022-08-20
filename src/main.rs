@@ -13,17 +13,20 @@ fn main() {
     args.next();
 
     if let Some(path) = args.next() {
-        // TODO: does all files have headers ?
-        let mut rdr = csv::ReaderBuilder::new()
-            .from_path(path)
-            .expect("could not open csv database");
-
         let transactions = History::new(
-            rdr.deserialize()
+            // FIXME: error handling: does all files have headers ?
+            // FIXME: error handling: does all row have the same nb of columns ?
+            // TODO: can be refactored using `from_path`.
+            csv::ReaderBuilder::new()
+                .from_path(path)
+                .expect("could not open csv database")
+                .deserialize()
                 .map(|result| result.expect("could not deserialize csv"))
                 .collect::<Vec<Transaction>>(),
         );
 
+        // not extracting accounts directly in the history enable the user
+        // to create it's own list of accounts.
         let mut clients = transactions
             .0
             .iter()
