@@ -2,7 +2,7 @@ use std::str::FromStr;
 
 use crate::accounts::Account;
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq, Eq)]
 pub enum TransactionError {
     ReadError(String),
     DeserializationError(String),
@@ -45,6 +45,7 @@ pub struct Transaction {
     pub amount: Option<f32>,
 }
 
+#[derive(Debug)]
 pub struct History(pub Vec<Transaction>);
 
 impl History {
