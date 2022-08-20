@@ -96,12 +96,15 @@ impl History {
     }
 }
 
-impl History {
-    /// Get a transaction by it's id.
-    fn transaction_by_id(&self, tx: u32) -> Option<&Transaction> {
-        self.0.iter().find(|old| old.tx == tx)
-    }
+/// Get a transaction by it's id.
+fn transaction_by_id(transactions: &[Transaction], tx: u32) -> Option<(usize, &Transaction)> {
+    transactions
+        .iter()
+        .enumerate()
+        .find(|(_, old)| old.tx == tx)
+}
 
+impl History {
     /// update all given accounts following the internal history of transactions.
     pub fn update_accounts<'a>(&'_ self, clients: &mut std::collections::HashMap<u16, Account>) {
         for transaction in &self.0 {
@@ -122,35 +125,41 @@ impl History {
                     // We can search from the beginning because for a
                     // dispute to occur their first need to be a regular
                     // transaction (withdrawal or deposit).
-                    if let Some(disputed) = self.transaction_by_id(transaction.tx).and_then(|old| {
-                        match (&old.r#type, old.amount) {
-                            (TransactionType::Deposit, Some(_))
-                            | (TransactionType::Withdrawal, Some(_)) => Some(old),
-                            _ => None,
-                        }
-                    }) {
+                    if let Some(disputed) =
+                        transaction_by_id(&self.0, transaction.tx).and_then(|(_, old)| {
+                            match (&old.r#type, old.amount) {
+                                (TransactionType::Deposit, Some(_))
+                                | (TransactionType::Withdrawal, Some(_)) => Some(old),
+                                _ => None,
+                            }
+                        })
+                    {
                         account.held += disputed.amount.unwrap();
 
                         account.disputed.push((*disputed).clone());
                     }
                 }
                 (TransactionType::Resolve, None) => {
-                    if let Some(disputed) = &account.disputed.last() {
+                    if let Some((index, disputed)) =
+                        transaction_by_id(&account.disputed, transaction.tx)
+                    {
                         {
                             account.available += disputed.amount.unwrap();
                             account.held -= disputed.amount.unwrap();
 
-                            account.disputed.pop();
+                            account.disputed.swap_remove(index);
                         };
                     }
                 }
                 (TransactionType::Chargeback, None) => {
-                    if let Some(disputed) = &account.disputed.last() {
+                    if let Some((index, disputed)) =
+                        transaction_by_id(&account.disputed, transaction.tx)
+                    {
                         account.held -= disputed.amount.unwrap();
                         account.total -= disputed.amount.unwrap();
 
                         account.locked = true;
-                        account.disputed.pop();
+                        account.disputed.swap_remove(index);
                     }
                 }
                 _ => {}
