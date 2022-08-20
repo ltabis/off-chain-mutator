@@ -129,8 +129,7 @@ impl History {
                     if let Some(disputed) =
                         transaction_by_id(&self.0, transaction.tx).and_then(|(_, old)| {
                             match (&old.r#type, old.amount) {
-                                (TransactionType::Deposit, Some(_))
-                                | (TransactionType::Withdrawal, Some(_)) => Some(old),
+                                (TransactionType::Withdrawal, Some(_)) => Some(old),
                                 _ => None,
                             }
                         })
@@ -157,13 +156,11 @@ impl History {
                     if let Some((index, disputed)) =
                         transaction_by_id(&account.disputed, transaction.tx)
                     {
-                        if matches!(disputed.r#type, TransactionType::Withdrawal) {
-                            account.held -= disputed.amount.unwrap();
-                            account.total -= disputed.amount.unwrap();
+                        account.held -= disputed.amount.unwrap();
+                        account.total -= disputed.amount.unwrap();
 
-                            account.locked = true;
-                            account.disputed.swap_remove(index);
-                        }
+                        account.locked = true;
+                        account.disputed.swap_remove(index);
                     }
                 }
                 _ => {}
