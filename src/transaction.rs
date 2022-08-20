@@ -1,4 +1,23 @@
+use std::str::FromStr;
+
 use crate::accounts::Account;
+
+#[derive(Debug)]
+pub enum TransactionError {
+    ReadError,
+    DeserializationError,
+}
+
+impl std::fmt::Display for TransactionError {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.write_str(match self {
+            TransactionError::ReadError => "could not read transactions",
+            TransactionError::DeserializationError => "could not deserialize transactions",
+        })
+    }
+}
+
+impl std::error::Error for TransactionError {}
 
 #[derive(Debug, serde::Serialize, serde::Deserialize)]
 #[serde(rename_all = "lowercase")]
@@ -26,6 +45,18 @@ pub struct History(pub Vec<Transaction>);
 impl History {
     pub fn new(transactions: Vec<Transaction>) -> Self {
         Self(transactions)
+    }
+
+    pub fn from_path(path: &str) -> Result<Self, TransactionError> {
+        Ok(Self(
+            csv::ReaderBuilder::new()
+                .from_path(std::path::PathBuf::from_str(path).unwrap())
+                .map_err(|_| TransactionError::ReadError)?
+                .deserialize()
+                .map(|result| result)
+                .collect::<Result<Vec<Transaction>, _>>()
+                .map_err(|_| TransactionError::DeserializationError)?,
+        ))
     }
 }
 

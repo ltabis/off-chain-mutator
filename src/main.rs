@@ -2,10 +2,7 @@
 //  - handle formatting errors.
 //  - think about big datasets.
 
-use off_chain_mutator::{
-    accounts::Account,
-    transaction::{History, Transaction},
-};
+use off_chain_mutator::{accounts::Account, transaction::History};
 
 fn main() {
     let mut args = std::env::args();
@@ -13,17 +10,9 @@ fn main() {
     args.next();
 
     if let Some(path) = args.next() {
-        let transactions = History::new(
-            // FIXME: error handling: does all files have headers ?
-            // FIXME: error handling: does all row have the same nb of columns ?
-            // TODO: can be refactored using `from_path`.
-            csv::ReaderBuilder::new()
-                .from_path(path)
-                .expect("could not open csv database")
-                .deserialize()
-                .map(|result| result.expect("could not deserialize csv"))
-                .collect::<Vec<Transaction>>(),
-        );
+        // FIXME: error handling: does all files have headers ?
+        // FIXME: error handling: does all row have the same nb of columns ?
+        let transactions = History::from_path(&path).expect("failed to read transactions");
 
         // not extracting accounts directly in the history enable the user
         // to create it's own list of accounts.
