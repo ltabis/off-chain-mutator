@@ -19,14 +19,13 @@ This project also exposes a library than you can use to customize the program, a
 # Tests
 
 Integration tests are available in the `tests` folder.
-To run tests, use:
+
 ```sh
 $ cargo test
 ```
 
 Todo:
 - [ ] add fuzzing.
-- [ ] add integration tests.
 
 # Other
 
@@ -37,3 +36,4 @@ I did not took time to make the app "beautiful" with nice colors, formatting and
 - [ ] setup clippy.
 - [ ] use internal-tagged enums for transactions (not yet supported by csv).
 - [ ] add a log feature for data errors.
+- [ ] use streams to accept input.

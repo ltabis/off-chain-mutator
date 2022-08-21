@@ -2,6 +2,7 @@ use std::str::FromStr;
 
 use crate::accounts::Account;
 
+/// Possible errors emitted by processing the history.
 #[derive(Debug, PartialEq, Eq)]
 pub enum TransactionError {
     ReadError(String),
@@ -27,6 +28,7 @@ impl std::fmt::Display for TransactionError {
 
 impl std::error::Error for TransactionError {}
 
+/// Possible types for a transaction.
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize, PartialEq)]
 #[serde(rename_all = "lowercase")]
 pub enum TransactionType {
@@ -37,14 +39,20 @@ pub enum TransactionType {
     Chargeback,
 }
 
+/// Metadata of a transaction.
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize, PartialEq)]
 pub struct Transaction {
+    /// The type of the transaction.
     pub r#type: TransactionType,
+    /// The associated client id.
     pub client: u16,
+    /// The id of the transaction.
     pub tx: u32,
+    /// The possible amount of currency withdrawn or deposited.
     pub amount: Option<f32>,
 }
 
+/// A list of all transactions in order.
 #[derive(Debug)]
 pub struct History(pub Vec<Transaction>);
 
@@ -53,10 +61,8 @@ impl History {
         Self(transactions)
     }
 
-    /// Checks data integrity of the history.
+    /// Checks data integrity of the transaction history.
     fn check_formatting(&self) -> Result<(), TransactionError> {
-        // Check if there are duplicates.
-        // FIXME: this could be slow. Search a better way to find duplicates.
         let mut regular_transaction = std::collections::HashSet::with_capacity(self.0.len());
 
         if let Some(duplicate) = self.0.iter().find(|transaction| match transaction.r#type {
@@ -71,7 +77,7 @@ impl History {
             )));
         }
 
-        // NOTE: We chose not to check for missing regular transactions for disputed.
+        // NOTE: We chose not to check for missing regular transactions in disputed records.
         //       They are simply just ignored.
 
         Ok(())
@@ -80,7 +86,7 @@ impl History {
     pub fn from_path(path: &str) -> Result<Self, TransactionError> {
         let history = Self(
             csv::ReaderBuilder::new()
-                // flexible is on to enable undisclosed amount (dispute, resolve & chargeback).
+                // flexible is on to enable undisclosed amount for disputes, resolves & chargebacks.
                 .flexible(true)
                 .trim(csv::Trim::All)
                 .from_path(std::path::PathBuf::from_str(path).unwrap())
@@ -135,6 +141,8 @@ impl History {
                             }
                         })
                     {
+                        // NOTE: it is safe to unwrap here: we know that the transaction
+                        //       is a withdrawal with a specific amount withdrawn.
                         account.held += disputed.amount.unwrap();
                         account.total += disputed.amount.unwrap();
 
@@ -145,18 +153,19 @@ impl History {
                     if let Some((index, disputed)) =
                         transaction_by_id(&account.disputed, transaction.tx)
                     {
-                        {
-                            account.available += disputed.amount.unwrap();
-                            account.held -= disputed.amount.unwrap();
+                        // NOTE: it is safe to unwrap here: the disputed vec
+                        //       always contain a withdrawal with a specific amount withdrawn.
+                        account.available += disputed.amount.unwrap();
+                        account.held -= disputed.amount.unwrap();
 
-                            account.disputed.swap_remove(index);
-                        };
+                        account.disputed.swap_remove(index);
                     }
                 }
                 (TransactionType::Chargeback, None) => {
                     if let Some((index, disputed)) =
                         transaction_by_id(&account.disputed, transaction.tx)
                     {
+                        // NOTE: it is safe to unwrap here because of the comment above.
                         account.held -= disputed.amount.unwrap();
                         account.total -= disputed.amount.unwrap();
 
