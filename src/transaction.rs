@@ -82,6 +82,7 @@ impl History {
             csv::ReaderBuilder::new()
                 // flexible is on to enable undisclosed amount (dispute, resolve & chargeback).
                 .flexible(true)
+                .trim(csv::Trim::All)
                 .from_path(std::path::PathBuf::from_str(path).unwrap())
                 .map_err(|err| TransactionError::ReadError(err.to_string()))?
                 .deserialize()
