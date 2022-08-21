@@ -35,6 +35,8 @@ $ cargo test
 
 Todo:
 - [ ] add fuzzing.
+- [ ] add benchmarks.
+- [ ] add valid inputs with a lot of transactions.
 
 # Other
 
